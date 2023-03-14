@@ -1,0 +1,4 @@
+NK(min/median/max)	rNBK(min/median/max)	NBK(min/median/max)
+500	48	50
+500	55	50
+500	63	50

@@ -1,0 +1,86 @@
+% Algorithm 1 for the left stochastic decomposition problem (Example 3.4)
+classdef LSD_NBK
+
+    properties
+        id = 'NBK'; % 'projected nonlinear Kaczmarz'
+        %tol_norm_grad = 1e-9 % if norm(grad) < tol_norm_grad, we not perform an update
+        % parameters for displaying the error such as color, marker etc
+        make_projection_feasibility_check
+        tol_linesearch
+        linesearch_optimizer
+        Newton_damping_factor    
+        max_abs_t = inf; % step size t will be rejected if abs(t) > max_abs_t
+        stabilize_exp = false; % boolean, 'true' enhances stability in exponential terms, but comes with a little cost
+                               % (was set to 'false' in all of our experiments, we did not need it)
+        plot_params = struct('minmaxcolor', [0.9 1 0.9], ...
+                                 'quantcolor', [0.6 1 0.6], ...
+                                 'linecolor', 'g', ...
+                                 'stroke', '-')
+    end
+
+    methods
+
+        function obj = LSD_NBK(init_struct)
+            obj.make_projection_feasibility_check = init_struct.make_projection_feasibility_check;
+            obj.tol_linesearch = init_struct.tol_linesearch;
+            obj.linesearch_optimizer = init_struct.linesearch_optimizer;
+            if strcmp(obj.linesearch_optimizer, 'regNewton')
+                assert(isfield(init_struct, 'Newton_damping_factor'))
+                obj.Newton_damping_factor = init_struct.Newton_damping_factor;
+            end
+            if isfield(init_struct, 'max_abs_t')
+                obj.max_abs_t = init_struct.max_abs_t;
+            end
+            if isfield(init_struct, 'stabilize_exp')
+                obj.stabilize_exp = init_struct.stabilize_exp; 
+            else
+                obj.stabilize_exp = false;
+            end
+        end
+
+
+        function vars = update(obj, vars, problem, p)
+            
+            i = sampling(p);
+            j = sampling(p);
+        
+            x_1 = vars.P(:,i);
+        
+            if i == j
+                grad_1 = 2 * x_1;
+                beta = x_1'*x_1 + problem.A(i,i);
+                try
+                    t = probability_simplex_entropy_stepsize(x_1, grad_1, beta, obj);
+                catch % if 1d problem not solvable, perform a rNBK step
+                    t = (grad_1'*x_1+beta)/norm(grad_1)^2;
+                    vars.num_empty_intersections = vars.num_empty_intersections + 1;
+                end  
+                    x_1 = x_1 .* exp(-t * grad_1);
+                    vars.P(:,i) = x_1 / sum(x_1); 
+            else
+                x_2 = vars.P(:,j);
+                grad_1 = x_2;
+                grad_2 = x_1;
+                try
+                    beta = x_1'*x_2 + problem.A(i,j);
+                    t = product_probability_simplex_entropy_stepsize(x_1, x_2, grad_1, grad_2, beta, obj);
+                catch  % if 1d problem not solvable, perform a rNBK step
+                    F_i_X = x_1' * x_2 - problem.A(i,j);
+                    t = F_i_X / (norm(grad_1,'inf')^2 + norm(grad_2,'inf')^2);   
+                    vars.num_empty_intersections = vars.num_empty_intersections + 1;         
+                end 
+                x_1 = x_1 .* exp(-t * grad_1);
+                vars.P(:,i) = x_1 / sum(x_1);
+                x_2 = x_2 .* exp(-t * grad_2); 
+                vars.P(:,j) = x_2 / sum(x_2);               
+            end
+
+        end
+
+    end
+
+end
+
+
+
+ 
