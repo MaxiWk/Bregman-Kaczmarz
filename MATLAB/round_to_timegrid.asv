@@ -4,7 +4,7 @@
 %        timegrid: equispaced 1D grid (column array) covering all values of 'runtime_over_iter'
 % output: t_idx_with_t_on_grid: array with "t_idx_with_t_on_grid(ii)
 %                                       = largest index jj with runtime_over_iter(jj) < ii*gridsize + eps"
-%         data_with_t_on_grid: rounded data matrix "data( t_idx_with_t_on_grid(ii) )"       
+%         data_with_t_on_grid: rounded data matrix "data( t_idx_with_t_on_grid(ii) )       
 
 
 function [t_idx_with_t_on_grid, data_with_t_on_grid] = round_to_timegrid(...

@@ -1,6 +1,4 @@
-% generates a plot of the average residual (or a different 
-% iteration-dependent error quantity) against runtime, which is rounded to 
-% a common time grid in a first step
+% computes a common timegrid (uniform over all methods and all repeats)
 function [num_grid_points, timegrid] = compute_timegrid(runtime_over_iter, num_examples, num_methods)
 
     % compute gridsize for runtime grid 
